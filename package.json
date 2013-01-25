@@ -15,8 +15,7 @@
       "request" :   "*",
       "iconv-lite": "*",
       "optimist":   "*",
-      "libxmljs":   "0.5.4",
-      "nquery"  :   "git://github.com/up2beer/nQuery.git",
+      "cheerio"  :   "*",
       "lo"      :   "*"
   },
   "keywords": [
