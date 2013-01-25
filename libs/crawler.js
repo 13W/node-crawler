@@ -328,7 +328,7 @@ var CrawlerPool = exports.CrawlerPool = function CrawlerPool(options, callback) 
 
     queue.drain = function() {
         console.debug('all downloaded in %d seconds', ((new Date().getTime()-startTime)/1000));
-//        callback(result);
+        callback(result);
     };
 
     defaultOptions.ruleFile = path.resolve(process.cwd(), defaultOptions.ruleFile);

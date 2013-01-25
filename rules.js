@@ -193,7 +193,7 @@ var DomRiaUa = exports['dom.ria.ua'] = {
     index           :   function( self, $, body ) {
         var pages = parseInt( $("div.pager a").last().text() ) || 1;
 //        console.log($("div.pager div.numbers").html());
-        pages = pages > 200 && 200 || pages;
+        pages = pages > 2 && 2 || pages;
 //        pages = pages > 2 && 1 || pages;
         self.result.pages = pages;
 
