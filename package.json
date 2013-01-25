@@ -1,0 +1,32 @@
+{
+  "name": "node-crawler",
+  "version": "0.0.1",
+  "description": "Node.JS Multithreaded Web Crawler with rules to parse site",
+  "main": "./libs/crawler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/up2beer/node-crawler.git"
+  },
+  "dependencies": {
+      "async"   :   "*",
+      "request" :   "*",
+      "iconv-lite": "*",
+      "optimist":   "*",
+      "libxmljs":   "0.5.4",
+      "nquery"  :   "git://github.com/up2beer/nQuery.git",
+      "lo"      :   "*"
+  },
+  "keywords": [
+    "crawler",
+    "jquery",
+    "spider",
+    "parser",
+    "web",
+    "site"
+  ],
+  "author": "Vladimir Bulyga <zero@cetku.net>",
+  "license": "BSD"
+}
