@@ -13,11 +13,17 @@ if (argv.help) {
     process.exit(0);
 }
 
-C.CrawlerPool({
-    startPoint      :   argv['start-point'],
+var Crawler = new C.CrawlerPool({
     ruleFile        :   argv['rule-config'],
     ruleGroup       :   argv['rule-group'],
     rulePoint       :   argv['rule-index'],
     threads         :   argv['threads'],
     httpMaxRequests :   argv['http-max-requests']
-}, console.warn);
+}, function(error, response) {
+    console.inspect(error, response);
+    console.debug('Crawling complete');
+});
+
+Crawler.push({
+    startPoint      :   argv['start-point']
+});

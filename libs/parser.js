@@ -1,10 +1,14 @@
 require('lo');
+//noinspection FunctionWithInconsistentReturnsJS
 var cheerio = require('cheerio'),
+//    nquery = require('nquery'),
     parse = true,
     applyRules = function( options, body ) {
+        var requestOptions = options.requestOptions;
+        options = options.options;
         var _done = false,
             sandbox = {
-                referer     :   options.referer,
+                referer     :   requestOptions.uri,
                 Queue       :   [],
                 variables   :   {},
                 options     :   options,
@@ -24,21 +28,16 @@ var cheerio = require('cheerio'),
             console.warn( 'Rules not found!' );
             return sandbox.Done();
         }
-//        console.inspect(body);
+
         try {
+            var $ = null;
             if ( typeof body == 'string' ) {
-                var $ = cheerio.load( body, {
-                    ignoreWhitespace: true,
-                    xmlMode: true,
-                    lowerCaseTags: true
-                });
-            } else
-                var $ = null;
+                var $ = cheerio.load( body);
+            }
         } catch ( e ) {
-            console.error(e);
+//            console.debug(e);
             throw e;
         }
-
         rules[ options.rulePoint ]
             && typeof rules[ options.rulePoint ] == 'function'
             && !rules[ options.rulePoint ]( sandbox, $, body )
@@ -50,12 +49,11 @@ var cheerio = require('cheerio'),
 process.on( 'message', function( message ) {
     switch( message.cmd ) {
         case    'parse' :
-//            console.log( message.body );
-            parse && applyRules( message.options, message.body );
+            parse && applyRules( {options: message.options, requestOptions: message.requestOptions}, message.body );
             break;
         case    'abort' :
             process.exit(0);
-    };
+    }
 });
 
 process.on( 'uncaughtException', function( error ) {
