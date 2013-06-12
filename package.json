@@ -1,6 +1,6 @@
 {
   "name": "node-crawler",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Node.JS Multithreaded Web Crawler with rules to parse site",
   "main": "./libs/crawler.js",
   "scripts": {
