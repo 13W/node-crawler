@@ -15,8 +15,9 @@
       "request" :   "*",
       "iconv-lite": "*",
       "optimist":   "*",
-      "cheerio"  :   "*",
-      "lo"      :   "*"
+      "cheerio" :   "*",
+      "lo"      :   "*",
+      "native-deep-extend": "*"
   },
   "keywords": [
     "crawler",

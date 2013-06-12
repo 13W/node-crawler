@@ -3,9 +3,7 @@ require('lo');
 var cheerio = require('cheerio'),
 //    nquery = require('nquery'),
     parse = true,
-    applyRules = function( options, body ) {
-        var requestOptions = options.requestOptions;
-        options = options.options;
+    applyRules = function( options, requestOptions, body ) {
         var _done = false,
             sandbox = {
                 referer     :   requestOptions.uri,
@@ -32,7 +30,7 @@ var cheerio = require('cheerio'),
         try {
             var $ = null;
             if ( typeof body == 'string' ) {
-                var $ = cheerio.load( body);
+                $ = cheerio.load( body);
             }
         } catch ( e ) {
 //            console.debug(e);
@@ -49,7 +47,7 @@ var cheerio = require('cheerio'),
 process.on( 'message', function( message ) {
     switch( message.cmd ) {
         case    'parse' :
-            parse && applyRules( {options: message.options, requestOptions: message.requestOptions}, message.body );
+            parse && applyRules( message.options, message.requestOptions, message.body );
             break;
         case    'abort' :
             process.exit(0);

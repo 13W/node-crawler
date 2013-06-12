@@ -5,6 +5,7 @@ var      fs = require( 'fs' ),
        path = require( 'path' ),
       async = require( 'async' ),
      domain = require( 'domain' ),
+     extend = require( 'native-deep-extend').extend,
     request = require( 'request' ),
      Buffer = require( 'buffer' ).Buffer,
       iconv = require( 'iconv-lite' ),
@@ -13,55 +14,9 @@ var      fs = require( 'fs' ),
         jar = request.jar(),
          cp = require('child_process');
 
-var extend = function Extend() {
-    var object = Object.create(Object.prototype, {
-        extend  :   {
-            writeable   :   false,
-            configurable:   false,
-            enumerable  :   false,
-            value       :   function(o, dst) {
-                dst = dst || this;
-                var set = function(key, value) {
-                    if (Array.isArray(object)) {
-                        dst.push(value || o[key]);
-                    } else {
-                        if ((value||o[key]) === undefined) return;
-                        dst[key] = value || o[key];
-                    }
-                };
-
-                for( var k in o ) {
-                    if (!o.hasOwnProperty(k)) {
-                        if (o[k] && o[k].bind)
-                            dst[k] = o[k].bind(o);
-                        else dst[k] = o[k];
-                        continue;
-                    }
-
-                    var type = {
-                        '[object Object]'   :   {},
-                        '[object Array]'    :   []
-                    }[toString.call(o[k])];
-                    if (!dst[k]) set(k, type);
-                    if (type) {
-                        set(k, extend(dst[k], o[k]));
-                    } else {
-                        set(k, o[k]);
-                    }
-                }
-            }
-        }
-    });
-
-    Array.prototype.slice.call(arguments).forEach(function(e) {
-        object.extend(e);
-    });
-    return object;
-};
-
 var Crawler = exports.Crawler = function Crawler(_requestOptions, options, callback) {
     if (!_requestOptions.uri) callback(new Error('URI must be specified'));
-
+    delete _requestOptions.jar;
     var self = this,
         defaultRequestOptions = {
             followAllRedirects   :  true,
@@ -69,7 +24,6 @@ var Crawler = exports.Crawler = function Crawler(_requestOptions, options, callb
             proxy                :  null,
             timeout              :  60000,
             method               :  'GET',
-            body                 :  '',
             headers              :  {
                 'Accept-Charset' :  'utf-8,windows-1251;q=0.7,*;q=0.3',
                 'Accept-Encoding':  'gzip,deflate',
@@ -77,20 +31,16 @@ var Crawler = exports.Crawler = function Crawler(_requestOptions, options, callb
                 'Accept'         :  'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 'User-Agent'     :  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.121 Safari/535.2'
             },
-            jar                  :  jar,
             fails                :  0
         },
-        requestOptions = extend(defaultRequestOptions, _requestOptions),
+        requestOptions = extend({}, defaultRequestOptions, _requestOptions),
         defaultOptions = extend({
             retries              :  3,
             retryTimeout         :  30000,
             requestTimeout       :  0
         }, options);
+        requestOptions.jar = jar;
 
-    if (requestOptions.method === 'POST') {
-        requestOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-        requestOptions.headers['Content-Length'] = requestOptions.body.length;
-    }
     if (Array.isArray(requestOptions.cookie)) {
         requestOptions.cookie.forEach( function( cookie ) {
             jar.add( request.cookie( cookie ) );
@@ -147,10 +97,10 @@ var Crawler = exports.Crawler = function Crawler(_requestOptions, options, callb
                     var encoding = getEncoding( response.headers, body.toString('utf-8') );
                     try {
                         body = iconv.fromEncoding( response.body, encoding );
-                        if (requestOptions.contentType === 'json') {
+                        if (requestOptions.require === 'json') {
                             body = JSON.parse(response.body);
-                        }
-                        else
+                        } else
+                        if (encoding)
                             body = body.replace( new RegExp( encoding, 'gi' ), 'utf-8' );
 
                     } catch(error) {
@@ -160,6 +110,7 @@ var Crawler = exports.Crawler = function Crawler(_requestOptions, options, callb
                     return callback( error, response, body );
 
                 });
+                return void 0;
             });
             _request.on( 'error', callback);
 
@@ -200,7 +151,7 @@ var Crawler = exports.Crawler = function Crawler(_requestOptions, options, callb
 
 exports.CrawlerPool = function CrawlerPool(options, callback) {
     var self = this,
-        result = extend(),
+        result = extend({}),
         startTime = new Date().getTime(),
         defaultOptions = extend({
             ruleFile        :   'rules.js',
@@ -211,9 +162,10 @@ exports.CrawlerPool = function CrawlerPool(options, callback) {
         }, options),
         queue = async.queue(function(options, callback) {
             process.nextTick(function() {
-                var crawlerOptions = extend(defaultOptions, options.options);
+                var crawlerOptions = extend({}, defaultOptions, options.options);
                 Crawler(options.requestOptions, crawlerOptions, function(error, response, body) {
                     if (error) return callback(error);
+                    if (options.requestOptions.require === 'binary') return callback(error);
                     var n = cp.fork(__dirname + '/parser.js');
 
                     n.send({
@@ -231,21 +183,28 @@ exports.CrawlerPool = function CrawlerPool(options, callback) {
                                 if ( message.result.Queue.length ) {
                                     var Queue = message.result.Queue.map(function(Q) {
                                         var opts = extend({}, {
-                                            requestOptions  :   {
-                                                headers     :   {}
-                                            }
-                                        },{
-                                            requestOptions  :   options.requestOptions,
-                                            options         :   crawlerOptions
-                                        }, {
-                                            requestOptions  :   {
-                                                uri         :   Q.uri,
-                                                contentType :   Q.contentType
+                                                requestOptions  :   {
+                                                    headers     :   {}
+                                                }
                                             },
-                                            options         :   {
-                                                rulePoint   :   Q.rule || Q.rulePoint
+                                            {
+//                                                requestOptions  : options.requestOptions,
+                                                options         : crawlerOptions
+                                            },
+                                            {
+                                                requestOptions  : {
+                                                    uri         : Q.uri,
+                                                    require     : Q.require,
+                                                    filename    : Q.filename
+                                                },
+                                                options         : {
+                                                    rulePoint   : Q.rule || Q.rulePoint
+                                                }
+                                            },
+                                            {
+                                                requestOptions: Q.requestOptions || {}
                                             }
-                                        });
+                                        );
                                         opts.requestOptions.uri = url.resolve(options.requestOptions.uri, opts.requestOptions.uri);
                                         opts.requestOptions.headers.referer = url.format(options.requestOptions.uri);
 //                                        opts.extend(Q);
@@ -253,7 +212,7 @@ exports.CrawlerPool = function CrawlerPool(options, callback) {
                                     });
                                     queue.push(Queue, console.fatal);
                                 }
-                                result.extend(message.result.result);
+                                result = extend({}, result, message.result.result);
                                 break;
                             case    'error' :
                                 var error = new Error();
@@ -314,12 +273,12 @@ exports.CrawlerPool = function CrawlerPool(options, callback) {
     };
     this.push = function(options, callback) {
         queue.push({
-            options         :   extend(defaultOptions, options.options, {
+            options         :   extend({}, defaultOptions, options.options, {
                 ruleFile    :   options.ruleFile,
                 ruleGroup   :   options.ruleGroup,
                 rulePoint   :   options.rulePoint
             }),
-            requestOptions  :   extend(options.requestOptions, {
+            requestOptions  :   extend({}, options.requestOptions, {
                 uri         :   options.uri || options.startPoint,
                 contentType :   options.contentType
             })
