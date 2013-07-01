@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/up2beer/node-crawler.git"
+    "url": "https://github.com/da-vinci/node-crawler.git"
   },
   "dependencies": {
       "async"   :   "*",
