@@ -64,36 +64,3 @@ exports['pdf-giant.com'] = {
         console.inspect(arguments);
     }
 };
-
-exports['stg2.ssi-cloud.com'] = {
-    index   :   function(self, $, body) {
-        self.Queue.push({
-            uri :   '/login',
-            requestOptions: {
-                method: 'POST',
-                form: {
-                    userid: 'bruce.lewis@ibm.com',
-                    username: 'bruce.lewis@ibm.com',
-                    password: 'passwordone'
-                }
-            },
-            rule: 'collect'
-        });
-        self.Done();
-    },
-    collect        :   function(self, $, body) {
-        self.Queue.push({
-            uri: '/rest/api/ibm/core.teams',
-            rule: 'getTeams',
-            require: 'json'
-        });
-        self.Done();
-    },
-    getTeams        :   function(self, $, body) {
-        self.result.teams = body && body.data && body.data['core.team'];
-        self.Done();
-    },
-    _callback       :   function(result) {
-        console.inspect(result);
-    }
-};
