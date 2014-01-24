@@ -9,3 +9,6 @@ node .bin/crawle.js \
     --rule-group=dom.ria.ua \
     --rule-index=index
 ```
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/13W/node-crawler/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
